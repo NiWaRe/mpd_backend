@@ -15,6 +15,8 @@ class Product(models.Model):
     # class Meta:
     #     app_label = 'quickstart'
 
+# TODO: should name be the PK?
+
 class Doctors(models.Model):
     doctor_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
@@ -50,10 +52,25 @@ class Patients(models.Model):
         db_table = 'patients'
         verbose_name_plural = 'patients'
 
+class MedicationTypes(models.Model):
+    medication_type_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50)
+    description = models.CharField(max_length=1000, blank=True) 
+
+    def __str__(self): 
+        return self.name
+
+    class Meta:
+        db_table = 'medication_types'
+        verbose_name_plural = 'medication_types'
+
 class Inventory(models.Model):
     medication_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=300)
+    medication_type_id = models.ForeignKey(MedicationTypes, null=True, on_delete=models.SET_NULL)
     ppDosageInMg = models.IntegerField()
+    totalDosageInMg = models.IntegerField()
+    totalPriceInEUR = models.IntegerField()
     prescriptionNeeded = models.BooleanField()
     inStock = models.BooleanField()
     manufacturer = models.CharField(max_length=300)
