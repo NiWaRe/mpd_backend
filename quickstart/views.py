@@ -63,18 +63,42 @@ def currentMedication(request, format=None):
         ]
     """
     if request.method == 'GET':
-        # assessment_id = request.query_params.get("assessment_id", None)
-        medications_qs = get_list_or_404(Product)
+        patient_id = 1
+        # 1. get all medication for a patient where dosage >= 0 and not redeemed
+        medications_qs = get_list_or_404(
+            Inventory, 
+            userownsmedication__patient_id=patient_id,
+            # still medication left, __gt = greater than 
+            userownsmedication__remainingDosageInMg__gt=0, 
+            # not yet redeemed
+            userownsmedication__prescription_id__redeemed=False,
+        )
+
+        # 2. extract information from description
+        # TODO: actual extraction, filter -- GPT3/sem search could be embedded here.
+        how_to_consume = {
+            "time":"twice a day"
+        }
+
+        # 3. create return package
         medications = []
         for medication in medications_qs: 
+            # TODO: String consumption,
             medications.append(
                 {
                     "name":medication.name, 
-                    "desc":medication.desc, 
-                    "prescription":medication.prescription,
+                    "medicationType":medication.medication_type_id.name,
+                    "time":how_to_consume["time"],
+                    "boughtTime":medication.userownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
+                    "dosageInMg":medication.ppDosageInMg,
+                    "totalDosage":medication.totalDosageInMg,
+                    "remainingDosage":medication.userownsmedication_set.get().remainingDosageInMg,
+                    "prescription":medication.prescriptionNeeded,
+                    "description":medication.description, 
                 }
             )
-        return Response(medications, status=status.HTTP_200_OK)
+        
+        return Response(medications, status=status.HTTP_201_CREATED)
 
     elif request.method == 'POST': 
         patient_id = request.data["patient_id"]

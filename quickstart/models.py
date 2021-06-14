@@ -131,5 +131,5 @@ class UserOwnsMedication(models.Model):
 
     class Meta:
         db_table = 'user_owns_medication'
-        verbose_name_plural = 'prescriptions'
+        verbose_name_plural = 'user_owns_medication'
         unique_together = (('medication_id', 'patient_id'),)
