@@ -20,15 +20,18 @@ class Doctors(models.Model):
     name = models.CharField(max_length=100)
     email = models.CharField(max_length=100)
     address = models.CharField(max_length=500)
-    description = models.CharField(max_length=1000)
+    # path can be left empty (null=True not possible for textfields)
+    description = models.CharField(max_length=1000, blank=True)
 
     def __str__(self): 
         # name in django admin / shell
         return str(self.doctor_id) + "_" + self.name
 
     class Meta:
-        # name in db
+        # name in db (otherwise quickstart_doctors would be the name of the db)
         db_table = 'doctors'
+        # __str__ name of model (would be 'doctorss' otherwise in admin panel)
+        verbose_name_plural = 'doctors'
 
 class Patients(models.Model):
     patient_id = models.AutoField(primary_key=True)
@@ -36,18 +39,16 @@ class Patients(models.Model):
     email = models.CharField(max_length=100)
     address = models.CharField(max_length=500)
     isChronic = models.BooleanField()
-    condition = models.CharField(max_length=100)
+    condition = models.CharField(max_length=100, blank=True)
     doctor_id = models.ForeignKey(Doctors, null=True, on_delete=models.SET_NULL)
-    description = models.CharField(max_length=1000)
+    description = models.CharField(max_length=1000, blank=True)
 
     def __str__(self): 
-        # name in django admin / shell
         return str(self.patient_id) + "_" + self.name
 
     class Meta:
-        # name in db
         db_table = 'patients'
-
+        verbose_name_plural = 'patients'
 
 class Inventory(models.Model):
     medication_id = models.AutoField(primary_key=True)
@@ -56,30 +57,29 @@ class Inventory(models.Model):
     prescriptionNeeded = models.BooleanField()
     inStock = models.BooleanField()
     manufacturer = models.CharField(max_length=300)
-    imagePath = models.CharField(max_length=300)
-    description = models.CharField(max_length=1000)
+    # path, desc can be left empty (null=True not possible for textfields)
+    imagePath = models.CharField(max_length=300, blank=True)
+    description = models.CharField(max_length=1000, blank=True)
 
     def __str__(self): 
-        # name in django admin / shell
         return self.name + "_" + self.manufacturer
 
     class Meta:
-        # name in db
         db_table = 'inventory'
+        verbose_name_plural = 'inventory'
 
 class PrescriptionTypes(models.Model):
     prescription_type_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50) 
     recurring = models.BooleanField()
-    description = models.CharField(max_length=1000) 
+    description = models.CharField(max_length=1000, blank=True) 
 
     def __str__(self): 
-        # name in django admin / shell
         return self.name
 
     class Meta:
-        # name in db
         db_table = 'prescription_types'
+        verbose_name_plural = 'prescription_types'
 
 class Prescriptions(models.Model):
     prescription_id = models.AutoField(primary_key=True)
@@ -87,15 +87,14 @@ class Prescriptions(models.Model):
     doctor_id = models.ForeignKey(Doctors, null=True, on_delete=models.SET_NULL)
     redeemed = models.BooleanField()
     validUntil = models.DateTimeField()
-    description = models.CharField(max_length=1000) 
+    description = models.CharField(max_length=1000, blank=True) 
 
     def __str__(self): 
-        # name in django admin / shell
-        return self.prescription_id
+        return str(self.prescription_id)
 
     class Meta:
-        # name in db
         db_table = 'prescriptions'
+        verbose_name_plural = 'prescriptions'
     
 # NOTE: Django doesn't support composite primary keys
 # That's why we have to use another AutoField primary key 
@@ -108,13 +107,12 @@ class UserOwnsMedication(models.Model):
     boughtTime = models.DateTimeField()
     remainingDosageInMg = models.IntegerField()
     prescription_id = models.ForeignKey(Prescriptions, null=True, on_delete=models.SET_NULL)
-    description = models.CharField(max_length=1000) 
+    description = models.CharField(max_length=1000, blank=True) 
 
     def __str__(self): 
-        # name in django admin / shell
-        return self.prescription_id
+        return str(self.medication_id) + "_" + str(self.patient_id)
 
     class Meta:
-        # name in db
         db_table = 'user_owns_medication'
+        verbose_name_plural = 'prescriptions'
         unique_together = (('medication_id', 'patient_id'),)
