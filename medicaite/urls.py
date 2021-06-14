@@ -25,6 +25,11 @@ from django.urls import include, path
 from rest_framework import routers
 from quickstart import views
 
+# for heroku serving of media files
+# tut.: https://dev.to/theshubhagrwl/deploying-django-app-to-heroku-full-guide-4ce0
+from django.conf import settings
+from django.conf.urls.static import static
+
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet)
 router.register(r'groups', views.GroupViewSet)
@@ -37,4 +42,4 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('quickstart/', include('quickstart.urls')),
     path('admin/', admin.site.urls),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
