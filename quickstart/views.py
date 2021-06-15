@@ -96,6 +96,7 @@ def currentMedication(request, format=None):
                     "name":medication.name, 
                     "medicationType":medication.medication_type_id.name,
                     "time":how_to_consume["time"],
+                    "totalPriceInEur":medication.totalPriceInEUR,
                     "boughtTime":medication.patientownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
                     "dosageInMg":medication.ppDosageInMg,
                     "totalDosage":medication.totalDosageInMg,
@@ -181,6 +182,7 @@ def newPrescriptions(request, format=None):
                     {
                         "medication_name":medication.name, 
                         "medicationType":medication.medication_type_id.name,
+                        "totalPriceInEur":medication.totalPriceInEUR,
                         "boughtTime":medication.patientownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
                         "dosageInMg":medication.ppDosageInMg,
                         "totalDosage":medication.totalDosageInMg,
