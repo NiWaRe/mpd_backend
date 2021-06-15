@@ -181,7 +181,6 @@ def newPrescriptions(request, format=None):
                     {
                         "medication_name":medication.name, 
                         "medicationType":medication.medication_type_id.name,
-                        "time":how_to_consume["time"],
                         "boughtTime":medication.patientownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
                         "dosageInMg":medication.ppDosageInMg,
                         "totalDosage":medication.totalDosageInMg,
