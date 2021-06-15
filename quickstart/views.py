@@ -44,7 +44,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 @permission_classes([permissions.AllowAny])
 def currentMedication(request, format=None):
     """
-    Current medication taken by the user.
+    Current medication taken by the patient.
     GET, DELETE not implemented for now. 
     Args: 
         patient_id, int
@@ -75,11 +75,11 @@ def currentMedication(request, format=None):
         # 1. get all medication for a patient where dosage >= 0 and already redeemed
         medications_qs = get_list_or_404(
             Inventory, 
-            userownsmedication__patient_id=patient_id,
+            patientownsmedication__patient_id=patient_id,
             # still medication left, __gt = greater than 
-            userownsmedication__remainingDosageInMg__gt=0, 
+            patientownsmedication__remainingDosageInMg__gt=0, 
             # already redeemed
-            userownsmedication__prescription_id__redeemed=True,
+            patientownsmedication__prescription_id__redeemed=True,
         )
 
         # 2. extract information from description
@@ -96,10 +96,10 @@ def currentMedication(request, format=None):
                     "name":medication.name, 
                     "medicationType":medication.medication_type_id.name,
                     "time":how_to_consume["time"],
-                    "boughtTime":medication.userownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
+                    "boughtTime":medication.patientownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
                     "dosageInMg":medication.ppDosageInMg,
                     "totalDosage":medication.totalDosageInMg,
-                    "remainingDosage":medication.userownsmedication_set.get().remainingDosageInMg,
+                    "remainingDosage":medication.patientownsmedication_set.get().remainingDosageInMg,
                     "prescription":medication.prescriptionNeeded,
                     "description":medication.description, 
                 }
@@ -163,9 +163,9 @@ def newPrescriptions(request, format=None):
 
         # 2. extract information from description
         # TODO: actual extraction, filter -- GPT3/sem search could be embedded here.
-        how_to_consume = {
-            "time":"twice a day"
-        }
+        # how_to_consume = {
+        #     "time":"twice a day"
+        # }
 
         # 3. create return package
         medications = []
@@ -173,7 +173,7 @@ def newPrescriptions(request, format=None):
             # get all medication associated with the specific prescription
             medications_qs = get_list_or_404(
                 Inventory, 
-                userownsmedication__prescription_id=prescription.prescription_id,
+                patientownsmedication__prescription_id=prescription.prescription_id,
             )
             temp = []
             for medication in medications_qs:
@@ -182,10 +182,10 @@ def newPrescriptions(request, format=None):
                         "medication_name":medication.name, 
                         "medicationType":medication.medication_type_id.name,
                         "time":how_to_consume["time"],
-                        "boughtTime":medication.userownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
+                        "boughtTime":medication.patientownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
                         "dosageInMg":medication.ppDosageInMg,
                         "totalDosage":medication.totalDosageInMg,
-                        "remainingDosage":medication.userownsmedication_set.get().remainingDosageInMg,
+                        "remainingDosage":medication.patientownsmedication_set.get().remainingDosageInMg,
                         "prescription":medication.prescriptionNeeded,
                         "description":medication.description, 
                     }

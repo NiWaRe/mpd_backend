@@ -110,7 +110,7 @@ class Prescriptions(models.Model):
     description = models.CharField(max_length=1000, blank=True) 
 
     def __str__(self): 
-        return str(self.prescription_id)
+        return str(self.prescription_id) + "_" + self.name
 
     class Meta:
         db_table = 'prescriptions'
