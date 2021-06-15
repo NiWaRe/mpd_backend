@@ -101,7 +101,10 @@ class PrescriptionTypes(models.Model):
 class Prescriptions(models.Model):
     prescription_id = models.AutoField(primary_key=True)
     prescription_type_id = models.ForeignKey(PrescriptionTypes, null=True, on_delete=models.SET_NULL)
+    name = models.CharField(max_length=100)
     doctor_id = models.ForeignKey(Doctors, null=True, on_delete=models.SET_NULL)
+    # otherwise prescriptions could be used for multiple patients
+    patient_id = models.ForeignKey(Patients, null=True, on_delete=models.SET_NULL)
     redeemed = models.BooleanField()
     validUntil = models.DateTimeField()
     description = models.CharField(max_length=1000, blank=True) 
@@ -117,11 +120,12 @@ class Prescriptions(models.Model):
 # That's why we have to use another AutoField primary key 
 # add the two keys (here the FKs) as normal columns with a 
 # "unique_together" constraint
-class UserOwnsMedication(models.Model):
+class PatientOwnsMedication(models.Model):
     user_owns_medication_id = models.AutoField(primary_key=True)
     medication_id = models.ForeignKey(Inventory, null=True, on_delete=models.SET_NULL)
     patient_id = models.ForeignKey(Patients, null=True, on_delete=models.SET_NULL)
-    boughtTime = models.DateTimeField()
+    # can be zero, if I didn't buy for now (unredeemed prescription)
+    boughtTime = models.DateTimeField(null=True)
     remainingDosageInMg = models.IntegerField()
     prescription_id = models.ForeignKey(Prescriptions, null=True, on_delete=models.SET_NULL)
     description = models.CharField(max_length=1000, blank=True) 
@@ -130,6 +134,6 @@ class UserOwnsMedication(models.Model):
         return str(self.medication_id) + "_" + str(self.patient_id)
 
     class Meta:
-        db_table = 'user_owns_medication'
-        verbose_name_plural = 'user_owns_medication'
+        db_table = 'patient_owns_medication'
+        verbose_name_plural = 'patient_owns_medication'
         unique_together = (('medication_id', 'patient_id'),)

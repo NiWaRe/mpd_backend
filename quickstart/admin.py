@@ -8,7 +8,7 @@ from .models import (
     Inventory, 
     PrescriptionTypes, 
     Prescriptions, 
-    UserOwnsMedication,
+    PatientOwnsMedication,
     MedicationTypes,
 )
 
@@ -18,5 +18,5 @@ admin.site.register(Patients)
 admin.site.register(Inventory)
 admin.site.register(PrescriptionTypes)
 admin.site.register(Prescriptions)
-admin.site.register(UserOwnsMedication)
+admin.site.register(PatientOwnsMedication)
 admin.site.register(MedicationTypes)

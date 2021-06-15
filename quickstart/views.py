@@ -44,9 +44,10 @@ class ProductViewSet(viewsets.ModelViewSet):
 @permission_classes([permissions.AllowAny])
 def currentMedication(request, format=None):
     """
-    Current medication taken by the user. 
+    Current medication taken by the user.
+    GET, DELETE not implemented for now. 
     Args: 
-        ...
+        patient_id, int
     Return:
         [
             {
@@ -63,53 +64,22 @@ def currentMedication(request, format=None):
         ]
     """
     if request.method == 'GET':
-        patient_id = 1
-        # 1. get all medication for a patient where dosage >= 0 and not redeemed
-        medications_qs = get_list_or_404(
-            Inventory, 
-            userownsmedication__patient_id=patient_id,
-            # still medication left, __gt = greater than 
-            userownsmedication__remainingDosageInMg__gt=0, 
-            # not yet redeemed
-            userownsmedication__prescription_id__redeemed=False,
+        # some_get_param = request.query_params.get("some_get_param", None)
+        return Response(
+            "Not implemented, please specify a patient_id (POST call)", 
+            status=status.HTTP_204_NO_CONTENT
         )
-
-        # 2. extract information from description
-        # TODO: actual extraction, filter -- GPT3/sem search could be embedded here.
-        how_to_consume = {
-            "time":"twice a day"
-        }
-
-        # 3. create return package
-        medications = []
-        for medication in medications_qs: 
-            # TODO: String consumption,
-            medications.append(
-                {
-                    "name":medication.name, 
-                    "medicationType":medication.medication_type_id.name,
-                    "time":how_to_consume["time"],
-                    "boughtTime":medication.userownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
-                    "dosageInMg":medication.ppDosageInMg,
-                    "totalDosage":medication.totalDosageInMg,
-                    "remainingDosage":medication.userownsmedication_set.get().remainingDosageInMg,
-                    "prescription":medication.prescriptionNeeded,
-                    "description":medication.description, 
-                }
-            )
-        
-        return Response(medications, status=status.HTTP_201_CREATED)
 
     elif request.method == 'POST': 
         patient_id = request.data["patient_id"]
-        # 1. get all medication for a patient where dosage >= 0 and not redeemed
+        # 1. get all medication for a patient where dosage >= 0 and already redeemed
         medications_qs = get_list_or_404(
             Inventory, 
             userownsmedication__patient_id=patient_id,
             # still medication left, __gt = greater than 
             userownsmedication__remainingDosageInMg__gt=0, 
-            # not yet redeemed
-            userownsmedication__prescription_id__redeemed=False,
+            # already redeemed
+            userownsmedication__prescription_id__redeemed=True,
         )
 
         # 2. extract information from description
@@ -121,7 +91,6 @@ def currentMedication(request, format=None):
         # 3. create return package
         medications = []
         for medication in medications_qs: 
-            # TODO: String consumption,
             medications.append(
                 {
                     "name":medication.name, 
@@ -136,12 +105,12 @@ def currentMedication(request, format=None):
                 }
             )
         
-        return Response(medications, status=status.HTTP_201_CREATED)
+        return Response(medications, status=status.HTTP_200_OK)
 
     elif request.method == 'DELETE': 
-        pass
-        return Response("DELETE", status=status.HTTP_200_OK)
+        return Response("Not implemented yet", status=status.HTTP_204_NO_CONTENT)
 
+    # something went wrong - none of the above cases was called
     return Response("last error", status=status.HTTP_400_BAD_REQUEST)   
 
 @api_view(['POST', 'GET', 'DELETE'])
@@ -149,65 +118,93 @@ def currentMedication(request, format=None):
 @permission_classes([permissions.AllowAny])
 def newPrescriptions(request, format=None):
     """
-    Current medication taken by the user. 
+    Current medication from unredeemed prescriptions. 
+    GET, DELETE not implemented for now. 
     Args: 
-        ...
+        patient_id, int
     Return:
         [
             {
-                String name,
-                int dosageInMg,
-                String consumption,
-                String time,
-                int totalDosage,
-                int remainingDosage,
-                bool prescription
+                String prescription_name;
+                Int prescription_id;
+                String doctor_name;
+                ...
+                DateTime date;
+                medications: [
+                    {
+                        <MedicationInformation>
+                    }, 
+                    {...},
+                    ...
+                ]
             },
             {...},
             ...
         ]
     """
     if request.method == 'GET':
-        # assessment_id = request.query_params.get("assessment_id", None)
-        medications_qs = get_list_or_404(Product)
-        medications = []
-        for medication in medications_qs: 
-            medications.append(
-                {
-                    "name":medication.name, 
-                    "desc":medication.desc, 
-                    "prescription":medication.prescription,
-                }
-            )
-        return Response(medications, status=status.HTTP_200_OK)
+        return Response(
+            "Not implemented, please specify a patient_id (POST call)", 
+            status=status.HTTP_204_NO_CONTENT
+        )
 
     elif request.method == 'POST': 
         patient_id = request.data["patient_id"]
-        # all medication for a patient where dosage >= 0
-        medications_qs = get_list_or_404(
-            Inventory, 
-            userownsmedication__patient_id=patient_id,
-            # __gt = greater than 
-            userownsmedication__remainingDosageInMg__gt=0
+        # 1. get all medication from all prescription that are not redeemed
+        # NOTE: group_by with annotate is mainly made if I want to aggreagte and group_by, 
+        # here I don't want to aggregate, but simply structure by prescription_ids
+        # https://simpleisbetterthancomplex.com/tutorial/2016/12/06/how-to-create-group-by-queries.html
+        # So first query prescriptions and then loop through them and get medications per prescription
+        non_red_presc_qs = get_list_or_404(
+            Prescriptions, 
+            patient_id=patient_id,
+            redeemed=False,
         )
+
+        # 2. extract information from description
+        # TODO: actual extraction, filter -- GPT3/sem search could be embedded here.
+        how_to_consume = {
+            "time":"twice a day"
+        }
+
+        # 3. create return package
         medications = []
-        for medication in medications_qs: 
+        for prescription in non_red_presc_qs: 
+            # get all medication associated with the specific prescription
+            medications_qs = get_list_or_404(
+                Inventory, 
+                userownsmedication__prescription_id=prescription.prescription_id,
+            )
+            temp = []
+            for medication in medications_qs:
+                temp.append(
+                    {
+                        "medication_name":medication.name, 
+                        "medicationType":medication.medication_type_id.name,
+                        "time":how_to_consume["time"],
+                        "boughtTime":medication.userownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
+                        "dosageInMg":medication.ppDosageInMg,
+                        "totalDosage":medication.totalDosageInMg,
+                        "remainingDosage":medication.userownsmedication_set.get().remainingDosageInMg,
+                        "prescription":medication.prescriptionNeeded,
+                        "description":medication.description, 
+                    }
+                )
+            # create final package
             medications.append(
                 {
-                    "name":medication.name, 
-                    "time":medication.userownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
-                    "dosageInMg":medication.ppDosageInMg,
-                    "totalDosage":medication.totalDosageInMg,
-                    "remainingDosage":medication.userownsmedication_set.get().remainingDosageInMg,
-                    "prescription":medication.prescriptionNeeded,
-                    "description":medication.desc, 
+                    "prescription_name":prescription.name,
+                    "prescription_id":prescription.prescription_id,
+                    "doctor_name":prescription.doctor_id.name, 
+                    "valid_until":prescription.validUntil.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
+                    "medications":temp,
                 }
             )
         
-        return Response(medications, status=status.HTTP_201_CREATED)
+        return Response(medications, status=status.HTTP_200_OK)
 
     elif request.method == 'DELETE': 
-        pass
-        return Response("DELETE", status=status.HTTP_200_OK)
+        return Response("Not implemented yet", status=status.HTTP_204_NO_CONTENT)
 
+    # something went wrong - none of the above cases was called
     return Response("last error", status=status.HTTP_400_BAD_REQUEST)   
