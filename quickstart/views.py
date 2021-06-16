@@ -234,13 +234,17 @@ def redeemPrescription(request, format=None):
         ids = request.data["ids"]
         # TODO: set also boughTime to now 
         # TODO: think about scenario when not all medications are redeemed at once
+        print(ids)
         for id in ids: 
             # assuming there's only one prescription that prescribed a medication 
             # TODO: otherwise the get call throws an error.
-            Prescriptions.objects.get(
-                patientownsmedication__medication_id=id["medication_id"], 
-                patientownsmedication__patient_id=id["patient_id"],
-            ).redeemed = True
+            prescription = get_object_or_404(
+                Prescriptions,
+                patientownsmedication__medication_id=3, 
+                patientownsmedication__patient_id=1,
+            )
+            prescription.redeemed = True
+            prescription.save()
         
         return Response("Success", status=status.HTTP_200_OK)
 
