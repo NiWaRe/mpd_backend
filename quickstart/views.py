@@ -94,6 +94,7 @@ def currentMedication(request, format=None):
             medications.append(
                 {
                     "medication_name":medication.name, 
+                    "medication_id":medication.medication_id,
                     "medicationType":medication.medication_type_id.name,
                     "time":how_to_consume["time"],
                     "totalPriceInEur":medication.totalPriceInEUR,
@@ -181,6 +182,7 @@ def newPrescriptions(request, format=None):
                 temp.append(
                     {
                         "medication_name":medication.name, 
+                        "medication_id":medication.medication_id,
                         "medicationType":medication.medication_type_id.name,
                         "time":how_to_consume["time"],
                         "totalPriceInEur":medication.totalPriceInEUR,
@@ -210,3 +212,36 @@ def newPrescriptions(request, format=None):
 
     # something went wrong - none of the above cases was called
     return Response("last error", status=status.HTTP_400_BAD_REQUEST)   
+
+@api_view(['POST', 'GET', 'DELETE'])
+@parser_classes([JSONParser])
+@permission_classes([permissions.AllowAny])
+def redeemPrescription(request, format=None):
+    """
+    Get one or multiple medication ids that were bought via a redeemed prescription.
+    Args: 
+        medication_ids, array of ints
+    Return:
+        status ok, 200
+    """
+    if request.method == 'GET':
+        return Response(
+            "Not implemented, please specify a patient_id (POST call)", 
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+    elif request.method == 'POST': 
+        medication_ids = request.data["ids"]
+        # 
+        for medication_id in medication_ids: 
+            Prescriptions.objects.get(
+                patientownsmedication__medication_id=medication_id
+            ).redeemed = True
+        
+        return Response("Success", status=status.HTTP_200_OK)
+
+    elif request.method == 'DELETE': 
+        return Response("Not implemented yet", status=status.HTTP_204_NO_CONTENT)
+
+    # something went wrong - none of the above cases was called
+    return Response("last error", status=status.HTTP_400_BAD_REQUEST) 
