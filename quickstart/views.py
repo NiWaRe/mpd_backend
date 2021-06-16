@@ -93,7 +93,7 @@ def currentMedication(request, format=None):
         for medication in medications_qs: 
             medications.append(
                 {
-                    "name":medication.name, 
+                    "medication_name":medication.name, 
                     "medicationType":medication.medication_type_id.name,
                     "time":how_to_consume["time"],
                     "totalPriceInEur":medication.totalPriceInEUR,
@@ -164,9 +164,9 @@ def newPrescriptions(request, format=None):
 
         # 2. extract information from description
         # TODO: actual extraction, filter -- GPT3/sem search could be embedded here.
-        # how_to_consume = {
-        #     "time":"twice a day"
-        # }
+        how_to_consume = {
+            "time":"twice a day"
+        }
 
         # 3. create return package
         medications = []
@@ -182,6 +182,7 @@ def newPrescriptions(request, format=None):
                     {
                         "medication_name":medication.name, 
                         "medicationType":medication.medication_type_id.name,
+                        "time":how_to_consume["time"],
                         "totalPriceInEur":medication.totalPriceInEUR,
                         "boughtTime":medication.patientownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
                         "dosageInMg":medication.ppDosageInMg,
