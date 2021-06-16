@@ -231,11 +231,15 @@ def redeemPrescription(request, format=None):
         )
 
     elif request.method == 'POST': 
-        medication_ids = request.data["ids"]
-        # 
-        for medication_id in medication_ids: 
+        ids = request.data["ids"]
+        # TODO: set also boughTime to now 
+        # TODO: think about scenario when not all medications are redeemed at once
+        for patient_id, medication_id in ids: 
+            # assuming there's only one prescription that prescribed a medication 
+            # TODO: otherwise the get call throws an error.
             Prescriptions.objects.get(
-                patientownsmedication__medication_id=medication_id
+                patientownsmedication__medication_id=medication_id, 
+                patientownsmedication__patient_id=patient_id,
             ).redeemed = True
         
         return Response("Success", status=status.HTTP_200_OK)
