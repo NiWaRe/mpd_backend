@@ -240,8 +240,8 @@ def redeemPrescription(request, format=None):
             # TODO: otherwise the get call throws an error.
             prescription = get_object_or_404(
                 Prescriptions,
-                patientownsmedication__medication_id=3, 
-                patientownsmedication__patient_id=1,
+                patientownsmedication__medication_id=id["medication_id"], 
+                patientownsmedication__patient_id=id["patient_id"],
             )
             prescription.redeemed = True
             prescription.save()
