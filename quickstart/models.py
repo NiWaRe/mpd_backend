@@ -107,6 +107,9 @@ class Prescriptions(models.Model):
     patient_id = models.ForeignKey(Patients, null=True, on_delete=models.SET_NULL)
     redeemed = models.BooleanField()
     validUntil = models.DateTimeField()
+    # TODO: More elegant: added as extra table "PrescriptionStatus" with additional infos. 
+    # for doctor request: possible states: "accepted", "pending", "call necessary", "appointment necessary"
+    status = models.CharField(max_length=50)
     description = models.CharField(max_length=1000, blank=True) 
 
     def __str__(self): 

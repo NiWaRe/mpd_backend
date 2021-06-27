@@ -10,6 +10,7 @@ from quickstart.serializers import *
 from quickstart.models import *
 
 from django.http import HttpResponse
+from django.core.mail import send_mail
 
 
 def index(request):
@@ -250,6 +251,98 @@ def redeemPrescription(request, format=None):
 
     elif request.method == 'DELETE': 
         return Response("Not implemented yet", status=status.HTTP_204_NO_CONTENT)
+
+    # something went wrong - none of the above cases was called
+    return Response("last error", status=status.HTTP_400_BAD_REQUEST) 
+
+@api_view(['POST'])
+@parser_classes([JSONParser])
+@permission_classes([permissions.AllowAny])
+def reorderPrescription(request, format=None):
+    """
+    Kick-Off prescription reordering process with doctor. Auto. send an e-mail with predefined action links 
+    to the responsible doctor. 
+    Args: 
+        doctor_id - int, 
+        email_body - str, adapted or predefined mail,
+        prescription_id - int
+    Return:
+        status ok, 200
+    """
+
+    if request.method == 'POST': 
+        doctor_id = request.data["doctor_id"]
+        email_body = request.data["email_body"]
+        prescription_id = request.data["prescription_id"]
+
+        # get doctor name, email
+        doctor = get_object_or_404(
+            Doctors,
+            doctor_id=doctor_id,
+        )
+        
+        # TODO: this should be stored and extracted from patient table
+        sender = "nicolas.remerscheid@gmail.com"
+        subject = f"Renewal of prescription patient"
+        # NOTE: assuming that frontend build up mail body (so that patient can personalize)
+        email_body_html = f"<html><body>{email_body}<br><br> \
+            <a href='http://localhost:8000/quickstart/api/answer_request/{prescription_id}/accepted'> \
+                Accept </a> | \
+            <a href='http://localhost:8000/quickstart/api/answer_request/{prescription_id}/call necessary'> \
+                Call necessary</a> | \
+            <a href='http://localhost:8000/quickstart/api/answer_request/{prescription_id}/appointment necessary'> \
+                Appointment necessary</a> \
+            </body></html>"
+
+        # create and send e-mail
+        res = send_mail(
+            subject=subject, 
+            message=email_body, 
+            html_message=email_body_html,
+            from_email=sender, 
+            recipient_list=[doctor.email], 
+            fail_silently=False)
+        
+        return Response(
+            "E-Mail sent!",
+            status=status.HTTP_200_OK
+        )
+
+    # something went wrong - none of the above cases was called
+    return Response("last error", status=status.HTTP_400_BAD_REQUEST) 
+
+@api_view(['GET'])
+@parser_classes([JSONParser])
+@permission_classes([permissions.AllowAny])
+def answerRequest(request, prescription_id, status_str, format=None):
+    """
+    Called when doctor clicks on specific action link (which was send via mail).
+    Args: 
+        prescription_id - int, encoded in URL as GET request
+        status - str, encoded in URL as GET request
+    Return:
+        status ok, 200
+    """
+    if request.method == 'GET':
+        # NOTE when doing GET request with args from a Frontend for example.
+        # prescription_id = request.query_params.get("prescription_id", None)
+        # status_str = request.query_params.get("status", None)
+
+        # check if correct params where passed in
+        if status_str==None or prescription_id==None: 
+            return Response("No status was passed in.", status=status.HTTP_400_BAD_REQUEST)
+
+        prescription_obj = get_object_or_404(
+            Prescriptions, 
+            prescription_id=prescription_id,
+        )
+        prescription_obj.status = status_str
+        prescription_obj.save()
+        
+        return HttpResponse(
+            f"<html><body><h1>{status_str}</h1><p>Your response was transfered to the patient</p></body></html>",
+            status=status.HTTP_200_OK
+        )
 
     # something went wrong - none of the above cases was called
     return Response("last error", status=status.HTTP_400_BAD_REQUEST) 

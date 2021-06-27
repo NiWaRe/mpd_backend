@@ -7,6 +7,8 @@ urlpatterns = [
     path('api/current_medication/', views.currentMedication),
     path('api/new_prescriptions/', views.newPrescriptions),
     path('api/redeem_prescription/', views.redeemPrescription),
+    path('api/reorder_prescription/', views.reorderPrescription),
+    path('api/answer_request/<int:prescription_id>/<str:status_str>', views.answerRequest)
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
