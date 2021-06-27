@@ -286,11 +286,11 @@ def reorderPrescription(request, format=None):
         subject = f"Renewal of prescription patient"
         # NOTE: assuming that frontend build up mail body (so that patient can personalize)
         email_body_html = f"<html><body>{email_body}<br><br> \
-            <a href='http://localhost:8000/quickstart/api/answer_request/{prescription_id}/accepted'> \
+            <a href='http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/accepted'> \
                 Accept </a> | \
-            <a href='http://localhost:8000/quickstart/api/answer_request/{prescription_id}/call necessary'> \
+            <a href='http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/call necessary'> \
                 Call necessary</a> | \
-            <a href='http://localhost:8000/quickstart/api/answer_request/{prescription_id}/appointment necessary'> \
+            <a href='http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/appointment necessary'> \
                 Appointment necessary</a> \
             </body></html>"
 
