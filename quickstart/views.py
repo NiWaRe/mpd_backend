@@ -346,3 +346,111 @@ def answerRequest(request, prescription_id, status_str, format=None):
 
     # something went wrong - none of the above cases was called
     return Response("last error", status=status.HTTP_400_BAD_REQUEST) 
+
+@api_view(['POST'])
+@parser_classes([JSONParser])
+@permission_classes([permissions.AllowAny])
+def responsibleDoctors(request, format=None):
+    """
+    Get responsible doctors for a certain patient and a certain medication
+    Args: 
+    {
+        patient_id:1,
+        medication_ids:[1, 3, 2, ...]
+    }
+    Return:
+    --> for example.
+        [
+            {
+                dr_id: 1,
+                dr_name: "nico remerscheid",
+                dr_email: "thepresident@tum.ai",
+                medicine: [
+                    {
+                        "medication_name": "Ramipril",
+                        "medication_id": 1,
+                        "medicationType": "Pill",
+                        "time": "twice a day",
+                        "totalPriceInEur": 13,
+                        "boughtTime": "17-Jun-2021 (20:48:58.000000)",
+                        "dosageInMg": 5,
+                        "totalDosage": 100,
+                        "remainingDosage": 20,
+                        "prescription": true,
+                        "description": "Works great!"
+                    },
+                    {...},
+                    ...
+                ]
+            },
+            ...
+        ]
+    """
+    if request.method == 'POST':
+        patient_id = request.data["patient_id"]
+        medication_ids = request.data["medication_ids"]
+
+        # doctor tracking array - for sorting 
+        doctor_list = []
+        # final package
+        doctor_med_packages = []
+
+        for medication_id in medication_ids: 
+            # get doctor object 
+            doctor = get_object_or_404(
+                Doctors, 
+                prescriptions__patientownsmedication__medication_id=medication_id, 
+                prescriptions__patientownsmedication__patient_id=patient_id,
+            )
+
+            # get medication info 
+            medication = get_object_or_404(
+                Inventory, 
+                medication_id=medication_id,
+            )
+
+            # TODO: actual extraction, filter -- GPT3/sem search could be embedded here.
+            how_to_consume = {
+                "time":"twice a day"
+            }
+
+            medication_info = {
+                "medication_name":medication.name, 
+                "medication_id":medication.medication_id,
+                "medicationType":medication.medication_type_id.name,
+                "time":how_to_consume["time"],
+                "totalPriceInEur":medication.totalPriceInEUR,
+                "boughtTime":medication.patientownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
+                "dosageInMg":medication.ppDosageInMg,
+                "totalDosage":medication.totalDosageInMg,
+                "remainingDosage":medication.patientownsmedication_set.get().remainingDosageInMg,
+                "prescription":medication.prescriptionNeeded,
+                "description":medication.description,
+            }
+
+            # two cases - for sorting (sql group by would've been the easiest)
+            if not doctor.doctor_id in doctor_list: 
+                # 1.case: create new entry 
+                doctor_list.append(doctor.doctor_id)
+                doctor_med_packages.append(
+                    {
+                        "dr_id": doctor.doctor_id,
+                        "dr_name": doctor.name,
+                        "dr_email": doctor.email,
+                        "medicine": [medication_info],
+                     }
+                )
+            else: 
+                # TODO: this is very condensed but also not very readable
+                # 2.case: append-case
+                doctor_med_packages[doctor_list==doctor.doctor_id]["medicine"].append(
+                    medication_info,
+                )
+        
+        return Response(
+            doctor_med_packages,
+            status=status.HTTP_200_OK
+        )
+
+    # something went wrong - none of the above cases was called
+    return Response("last error", status=status.HTTP_400_BAD_REQUEST) 
