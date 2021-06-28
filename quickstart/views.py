@@ -11,6 +11,7 @@ from quickstart.models import *
 
 from django.http import HttpResponse
 from django.core.mail import send_mail
+from django.template import loader
 
 
 def index(request):
@@ -89,7 +90,7 @@ def currentMedication(request, format=None):
         how_to_consume = {
             "time":"twice a day"
         }
-
+        
         # 3. create return package
         medications = []
         for medication in medications_qs: 
@@ -100,14 +101,25 @@ def currentMedication(request, format=None):
                     "medicationType":medication.medication_type_id.name,
                     "time":how_to_consume["time"],
                     "totalPriceInEur":medication.totalPriceInEUR,
-                    "boughtTime":medication.patientownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
+                    "boughtTime":medication.patientownsmedication_set.filter(
+                        patient_id=patient_id
+                    ).get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
                     "dosageInMg":medication.ppDosageInMg,
                     "totalDosage":medication.totalDosageInMg,
-                    "daysLeft":medication.patientownsmedication_set.get().daysLeft,
-                    "totalDays":medication.patientownsmedication_set.get().totalDays,
+                    "daysLeft":medication.patientownsmedication_set.filter(
+                        patient_id=patient_id
+                    ).get().daysLeft,
+                    "totalDays":medication.patientownsmedication_set.filter(
+                        patient_id=patient_id
+                    ).get().totalDays,
                     "prescription":medication.prescriptionNeeded,
                     "description":medication.description, 
-                    "status":medication.patientownsmedication_set.get().prescription_id.status,
+                    "status":medication.patientownsmedication_set.filter(
+                        patient_id=patient_id
+                    ).get().prescription_id.status,
+                    "prescription_id":medication.patientownsmedication_set.filter(
+                        patient_id=patient_id
+                    ).get().prescription_id.prescription_id,
                 }
             )
         
@@ -191,14 +203,25 @@ def newPrescriptions(request, format=None):
                         "medicationType":medication.medication_type_id.name,
                         "time":how_to_consume["time"],
                         "totalPriceInEur":medication.totalPriceInEUR,
-                        "boughtTime":medication.patientownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
+                        "boughtTime":medication.patientownsmedication_set.filter(
+                            patient_id=patient_id
+                        ).get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
                         "dosageInMg":medication.ppDosageInMg,
                         "totalDosage":medication.totalDosageInMg,
-                        "daysLeft":medication.patientownsmedication_set.get().daysLeft,
-                        "totalDays":medication.patientownsmedication_set.get().totalDays,
+                        "daysLeft":medication.patientownsmedication_set.filter(
+                            patient_id=patient_id
+                        ).get().daysLeft,
+                        "totalDays":medication.patientownsmedication_set.filter(
+                            patient_id=patient_id
+                        ).get().totalDays,
                         "prescription":medication.prescriptionNeeded,
                         "description":medication.description, 
-                        "status":medication.patientownsmedication_set.get().prescription_id.status,
+                        "status":medication.patientownsmedication_set.filter(
+                            patient_id=patient_id
+                        ).get().prescription_id.status,
+                        "prescription_id":medication.patientownsmedication_set.filter(
+                            patient_id=patient_id
+                        ).get().prescription_id.prescription_id,
                     }
                 )
             # create final package
@@ -291,14 +314,24 @@ def reorderPrescription(request, format=None):
         sender = "nicolas.remerscheid@gmail.com"
         subject = f"Renewal of prescription patient"
         # NOTE: assuming that frontend build up mail body (so that patient can personalize)
-        email_body_html = f"<html><body>{email_body}<br><br> \
-            <a href='http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/accepted'> \
-                Accept </a> | \
-            <a href='http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/call necessary'> \
-                Call necessary</a> | \
-            <a href='http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/appointment necessary'> \
-                Appointment necessary</a> \
-            </body></html>"
+        # email_body_html = f"<html><body>{email_body}<br><br> \
+        #     <a href='http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/accepted'> \
+        #         Accept </a> | \
+        #     <a href='http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/call necessary'> \
+        #         Call necessary</a> | \
+        #     <a href='http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/appointment necessary'> \
+        #         Appointment necessary</a> \
+        #     </body></html>"
+
+        # TODO: the email_body shouldn't contain html tags.
+        email_body_html = loader.render_to_string(
+            'doctor_mail.html',
+            {
+                'email_body':email_body,
+                'current_domain':request.META['HTTP_HOST'],
+                'prescription_id':prescription_id,
+            }
+        )
 
         # create and send e-mail
         res = send_mail(
@@ -310,7 +343,7 @@ def reorderPrescription(request, format=None):
             fail_silently=False)
         
         return Response(
-            "E-Mail sent!",
+            "E-Mail sent!" if res else "There was a problem sending the mail!",
             status=status.HTTP_200_OK
         )
 
@@ -426,14 +459,25 @@ def responsibleDoctors(request, format=None):
                 "medicationType":medication.medication_type_id.name,
                 "time":how_to_consume["time"],
                 "totalPriceInEur":medication.totalPriceInEUR,
-                "boughtTime":medication.patientownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
+                "boughtTime":medication.patientownsmedication_set.filter(
+                    patient_id=patient_id
+                ).get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
                 "dosageInMg":medication.ppDosageInMg,
                 "totalDosage":medication.totalDosageInMg,
-                "daysLeft":medication.patientownsmedication_set.get().daysLeft,
-                "totalDays":medication.patientownsmedication_set.get().totalDays,
+                "daysLeft":medication.patientownsmedication_set.filter(
+                    patient_id=patient_id
+                ).get().daysLeft,
+                "totalDays":medication.patientownsmedication_set.filter(
+                    patient_id=patient_id
+                ).get().totalDays,
                 "prescription":medication.prescriptionNeeded,
-                "description":medication.description,
-                "status":medication.patientownsmedication_set.get().prescription_id.status,
+                "description":medication.description, 
+                "status":medication.patientownsmedication_set.filter(
+                    patient_id=patient_id
+                ).get().prescription_id.status,
+                "prescription_id":medication.patientownsmedication_set.filter(
+                    patient_id=patient_id
+                ).get().prescription_id.prescription_id,
             }
 
             # two cases - for sorting (sql group by would've been the easiest)
