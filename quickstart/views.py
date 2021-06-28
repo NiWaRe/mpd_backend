@@ -105,6 +105,7 @@ def currentMedication(request, format=None):
                     "remainingDosage":medication.patientownsmedication_set.get().remainingDosageInMg,
                     "prescription":medication.prescriptionNeeded,
                     "description":medication.description, 
+                    "status":medication.patientownsmedication_set.get().prescription_id.status,
                 }
             )
         
@@ -193,6 +194,7 @@ def newPrescriptions(request, format=None):
                         "remainingDosage":medication.patientownsmedication_set.get().remainingDosageInMg,
                         "prescription":medication.prescriptionNeeded,
                         "description":medication.description, 
+                        "status":medication.patientownsmedication_set.get().prescription_id.status,
                     }
                 )
             # create final package
@@ -426,6 +428,7 @@ def responsibleDoctors(request, format=None):
                 "remainingDosage":medication.patientownsmedication_set.get().remainingDosageInMg,
                 "prescription":medication.prescriptionNeeded,
                 "description":medication.description,
+                "status":medication.patientownsmedication_set.get().prescription_id.status,
             }
 
             # two cases - for sorting (sql group by would've been the easiest)
