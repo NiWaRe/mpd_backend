@@ -129,7 +129,8 @@ class PatientOwnsMedication(models.Model):
     patient_id = models.ForeignKey(Patients, null=True, on_delete=models.SET_NULL)
     # can be zero, if I didn't buy for now (unredeemed prescription)
     boughtTime = models.DateTimeField(null=True)
-    remainingDosageInMg = models.IntegerField()
+    # TODO: this will be mocked for now. normally this should be calculated (see notes in Notion).
+    daysLeft = models.IntegerField()
     prescription_id = models.ForeignKey(Prescriptions, null=True, on_delete=models.SET_NULL)
     description = models.CharField(max_length=1000, blank=True) 
 

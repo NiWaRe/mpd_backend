@@ -78,7 +78,7 @@ def currentMedication(request, format=None):
             Inventory, 
             patientownsmedication__patient_id=patient_id,
             # still medication left, __gt = greater than 
-            patientownsmedication__remainingDosageInMg__gt=0, 
+            patientownsmedication__daysLeft__gt=0, 
             # already redeemed
             patientownsmedication__prescription_id__redeemed=True,
         )
@@ -102,7 +102,7 @@ def currentMedication(request, format=None):
                     "boughtTime":medication.patientownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
                     "dosageInMg":medication.ppDosageInMg,
                     "totalDosage":medication.totalDosageInMg,
-                    "remainingDosage":medication.patientownsmedication_set.get().remainingDosageInMg,
+                    "daysLeft":medication.patientownsmedication_set.get().daysLeft,
                     "prescription":medication.prescriptionNeeded,
                     "description":medication.description, 
                     "status":medication.patientownsmedication_set.get().prescription_id.status,
@@ -191,7 +191,7 @@ def newPrescriptions(request, format=None):
                         "boughtTime":medication.patientownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
                         "dosageInMg":medication.ppDosageInMg,
                         "totalDosage":medication.totalDosageInMg,
-                        "remainingDosage":medication.patientownsmedication_set.get().remainingDosageInMg,
+                        "daysLeft":medication.patientownsmedication_set.get().daysLeft,
                         "prescription":medication.prescriptionNeeded,
                         "description":medication.description, 
                         "status":medication.patientownsmedication_set.get().prescription_id.status,
@@ -425,7 +425,7 @@ def responsibleDoctors(request, format=None):
                 "boughtTime":medication.patientownsmedication_set.get().boughtTime.strftime("%d-%b-%Y (%H:%M:%S.%f)"),
                 "dosageInMg":medication.ppDosageInMg,
                 "totalDosage":medication.totalDosageInMg,
-                "remainingDosage":medication.patientownsmedication_set.get().remainingDosageInMg,
+                "daysLeft":medication.patientownsmedication_set.get().daysLeft,
                 "prescription":medication.prescriptionNeeded,
                 "description":medication.description,
                 "status":medication.patientownsmedication_set.get().prescription_id.status,
