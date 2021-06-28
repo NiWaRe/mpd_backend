@@ -70,7 +70,7 @@ class Inventory(models.Model):
     medication_type_id = models.ForeignKey(MedicationTypes, null=True, on_delete=models.SET_NULL)
     ppDosageInMg = models.IntegerField()
     totalDosageInMg = models.IntegerField()
-    totalPriceInEUR = models.IntegerField()
+    totalPriceInEUR = models.FloatField()
     prescriptionNeeded = models.BooleanField()
     inStock = models.BooleanField()
     manufacturer = models.CharField(max_length=300)
@@ -131,6 +131,8 @@ class PatientOwnsMedication(models.Model):
     boughtTime = models.DateTimeField(null=True)
     # TODO: this will be mocked for now. normally this should be calculated (see notes in Notion).
     daysLeft = models.IntegerField()
+    # TODO: this would be initialized first with the initial totalDosage/intake_frequency
+    totalDays = models.IntegerField()
     prescription_id = models.ForeignKey(Prescriptions, null=True, on_delete=models.SET_NULL)
     description = models.CharField(max_length=1000, blank=True) 
 

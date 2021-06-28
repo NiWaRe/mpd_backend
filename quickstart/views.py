@@ -73,15 +73,16 @@ def currentMedication(request, format=None):
 
     elif request.method == 'POST': 
         patient_id = request.data["patient_id"]
+        # TODO: error handling if resulting queryset is empty
         # 1. get all medication for a patient where dosage >= 0 and already redeemed
-        medications_qs = get_list_or_404(
-            Inventory, 
+        # sorted by daysLeft in ascending order
+        medications_qs = Inventory.objects.filter( 
             patientownsmedication__patient_id=patient_id,
             # still medication left, __gt = greater than 
             patientownsmedication__daysLeft__gt=0, 
             # already redeemed
             patientownsmedication__prescription_id__redeemed=True,
-        )
+        ).order_by("patientownsmedication__daysLeft") 
 
         # 2. extract information from description
         # TODO: actual extraction, filter -- GPT3/sem search could be embedded here.
@@ -103,6 +104,7 @@ def currentMedication(request, format=None):
                     "dosageInMg":medication.ppDosageInMg,
                     "totalDosage":medication.totalDosageInMg,
                     "daysLeft":medication.patientownsmedication_set.get().daysLeft,
+                    "totalDays":medication.patientownsmedication_set.get().totalDays,
                     "prescription":medication.prescriptionNeeded,
                     "description":medication.description, 
                     "status":medication.patientownsmedication_set.get().prescription_id.status,
@@ -174,11 +176,12 @@ def newPrescriptions(request, format=None):
         # 3. create return package
         medications = []
         for prescription in non_red_presc_qs: 
+            # TODO: error handling if resulting queryset is empty
             # get all medication associated with the specific prescription
-            medications_qs = get_list_or_404(
-                Inventory, 
+            medications_qs = Inventory.objects.filter( 
                 patientownsmedication__prescription_id=prescription.prescription_id,
-            )
+            ).order_by("patientownsmedication__daysLeft") 
+
             temp = []
             for medication in medications_qs:
                 temp.append(
@@ -192,6 +195,7 @@ def newPrescriptions(request, format=None):
                         "dosageInMg":medication.ppDosageInMg,
                         "totalDosage":medication.totalDosageInMg,
                         "daysLeft":medication.patientownsmedication_set.get().daysLeft,
+                        "totalDays":medication.patientownsmedication_set.get().totalDays,
                         "prescription":medication.prescriptionNeeded,
                         "description":medication.description, 
                         "status":medication.patientownsmedication_set.get().prescription_id.status,
@@ -426,6 +430,7 @@ def responsibleDoctors(request, format=None):
                 "dosageInMg":medication.ppDosageInMg,
                 "totalDosage":medication.totalDosageInMg,
                 "daysLeft":medication.patientownsmedication_set.get().daysLeft,
+                "totalDays":medication.patientownsmedication_set.get().totalDays,
                 "prescription":medication.prescriptionNeeded,
                 "description":medication.description,
                 "status":medication.patientownsmedication_set.get().prescription_id.status,
