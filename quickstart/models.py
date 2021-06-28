@@ -79,7 +79,7 @@ class Inventory(models.Model):
     description = models.CharField(max_length=1000, blank=True)
 
     def __str__(self): 
-        return self.name + "_" + self.manufacturer
+        return self.medication_id + "_" + self.name + "_" + self.manufacturer
 
     class Meta:
         db_table = 'inventory'
