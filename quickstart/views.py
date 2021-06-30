@@ -311,6 +311,7 @@ def reorderPrescription(request, format=None):
         )
         
         # TODO: this should be stored and extracted from patient table
+        # TODO: can I change the displayed name to whatever I want? 
         sender = "nicolas.remerscheid@gmail.com"
         subject = f"Renewal of prescription patient"
         # NOTE: assuming that frontend build up mail body (so that patient can personalize)
@@ -340,7 +341,15 @@ def reorderPrescription(request, format=None):
             html_message=email_body_html,
             from_email=sender, 
             recipient_list=[doctor.email], 
-            fail_silently=False)
+            fail_silently=True)
+
+        # set status on pending
+        prescription_obj = get_object_or_404(
+            Prescriptions, 
+            prescription_id=prescription_id,
+        )
+        prescription_obj.status = "pending"
+        prescription_obj.save()
         
         return Response(
             "E-Mail sent!" if res else "There was a problem sending the mail!",
