@@ -12,6 +12,8 @@
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <div class="container">
+        <!-- Header -->
+        <img src="cid:{{ header }}" width="100%" height="auto" />
         <br>
         <br>
         <h1 class=title style="text-align: center;">Request for Prescription Renewal</h1>
@@ -20,39 +22,38 @@
 
         <!-- Passed in message from patient -->
         <div class="row">
-            {{ email_body }}
+            <p class="lead">{{ email_body }}</p>
         </div>
         <br>
         <br>
         
         <!-- Standard Footer for Accesing -->
         <!-- TODO: not centered responsively. -->
-        <div class="row">
-            <div class="col-2"></div>
-            <div class="col-8">
-                <a 
-                    href="http://{{ current_domain }}/quickstart/api/answer_request/{{ prescription_id }}/accepted"
-                    class="btn btn-success"
-                    style="color:white; margin: 5px; width:100px; display: inline-block;">
-                    Accept request
-                </a> 
-                <a 
-                    href="http://{{ current_domain }}/quickstart/api/answer_request/{{ prescription_id }}/call necessary"
-                    class="btn btn-success"
-                    style="color:white; margin: 5px; width:100px; display: inline-block;">
-                    Call necessary
-                </a> 
-                <a 
-                    href="http://{{ current_domain }}/quickstart/api/answer_request/{{ prescription_id }}/appointment necessary"
-                    class="btn btn-success"
-                    style="color: white; margin: 5px; width:100px; display: inline-block;">
-                    Appointment necessary
-                </a> 
-            </div>
-            <div class="col-2"></div>
+        <div class="row d-flex justify-content-center">
+            <a 
+                href="http://{{ current_domain }}/quickstart/api/answer_request/{{ prescription_id }}/accepted"
+                class="btn btn-success"
+                style="background-color:#236D49; margin: 5px; width:100px; display: inline-block; text-decoration: none; color:white; padding: 4px; text-align: center; border-radius: 5px;">
+                Accept request
+            </a> 
+            <a 
+                href="http://{{ current_domain }}/quickstart/api/answer_request/{{ prescription_id }}/call necessary"
+                class="btn btn-success"
+                style="background-color:#236D49; margin: 5px; width:100px; display: inline-block; text-decoration: none; color:white; padding: 4px; text-align: center; border-radius: 5px;">
+                Call necessary
+            </a> 
+            <a 
+                href="http://{{ current_domain }}/quickstart/api/answer_request/{{ prescription_id }}/appointment necessary"
+                class="btn btn-success"
+                style="background-color:#236D49; margin: 5px; width:100px; display: inline-block; text-decoration: none; color:white; padding: 4px; text-align: center; border-radius: 5px;">
+                Appointment necessary
+            </a> 
         </div>
         <br>
         <br>
+        <!-- <div class="row">
+            <img src="cid:{{ logo }}" width="100px" height="auto" />
+        </div> -->
         <div class="row">
             <strong><p style="color: rgb(233, 183, 168); float: left;">Remedica</p></strong>
         </div>

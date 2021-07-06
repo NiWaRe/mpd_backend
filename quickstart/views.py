@@ -13,6 +13,11 @@ from django.http import HttpResponse
 from django.core.mail import send_mail
 from django.template import loader
 
+from pathlib import Path
+from email.mime.image import MIMEImage
+from django.core.mail import EmailMultiAlternatives
+import os
+
 
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
@@ -284,6 +289,25 @@ def redeemPrescription(request, format=None):
     # something went wrong - none of the above cases was called
     return Response("last error", status=status.HTTP_400_BAD_REQUEST) 
 
+# Utility function for sending for emails
+def send_email_html(subject, text_content, html_content, sender, recipient, image_paths=None, image_names=None):
+    email = EmailMultiAlternatives(
+        subject=subject, 
+        body=text_content, 
+        from_email=sender, 
+        to=recipient if isinstance(recipient, list) else [recipient]
+    )
+    for image_path, image_name in zip(image_paths,image_names):
+        if all([html_content,image_path,image_name]):
+            email.attach_alternative(html_content, "text/html")
+            email.content_subtype = 'html'  # set the primary content to be text/html
+            email.mixed_subtype = 'related' # it is an important part that ensures embedding of an image 
+            with open(image_path, mode='rb') as f:
+                image = MIMEImage(f.read())
+                email.attach(image)
+                image.add_header('Content-ID', f"<{image_name}>")
+    return email.send()
+
 @api_view(['POST'])
 @parser_classes([JSONParser])
 @permission_classes([permissions.AllowAny])
@@ -324,6 +348,23 @@ def reorderPrescription(request, format=None):
         #         Appointment necessary</a> \
         #     </body></html>"
 
+        # images
+        all_img_paths = []
+        all_img_names = []
+        
+        PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+
+        logo_path = PROJECT_ROOT+'/templates/assets/img/logo_white_bg.png'
+        logo_name = Path(logo_path).name
+        # TODO: uncomment if logo is used in mail
+        # all_img_paths.append(logo_path)
+        # all_img_names.append(logo_name)
+
+        header_path = PROJECT_ROOT+'/templates/assets/img/remedica_header.png'
+        header_name = Path(header_path).name
+        all_img_paths.append(header_path)
+        all_img_names.append(header_name)
+
         # TODO: the email_body shouldn't contain html tags.
         email_body_html = loader.render_to_string(
             'doctor_mail.html',
@@ -331,17 +372,28 @@ def reorderPrescription(request, format=None):
                 'email_body':email_body,
                 'current_domain':request.META['HTTP_HOST'],
                 'prescription_id':prescription_id,
+                'logo':logo_name,
+                'header':header_name,
             }
         )
 
         # create and send e-mail
-        res = send_mail(
-            subject=subject, 
-            message=email_body, 
-            html_message=email_body_html,
-            from_email=sender, 
-            recipient_list=[doctor.email], 
-            fail_silently=True)
+        res = send_email_html(
+            subject=subject,
+            text_content=email_body, 
+            html_content=email_body_html, 
+            sender=sender, 
+            recipient=[doctor.email], 
+            image_paths=all_img_paths, 
+            image_names=all_img_names
+        )
+        # res = send_mail(
+        #     subject=subject, 
+        #     message=email_body, 
+        #     html_message=email_body_html,
+        #     from_email=sender, 
+        #     recipient_list=[doctor.email], 
+        #     fail_silently=True)
 
         # set status on pending
         prescription_obj = get_object_or_404(
@@ -388,7 +440,13 @@ def answerRequest(request, prescription_id, status_str, format=None):
         prescription_obj.save()
         
         return HttpResponse(
-            f"<html><body><h1>{status_str}</h1><p>Your response was transfered to the patient</p></body></html>",
+            f"""
+                <html> 
+                    <body>
+                        <h1 style="font: 30px Arial, sans-serif; text-align:center; color:#236D49;">{status_str}</h1>
+                        <p style="font: 15px Arial, sans-serif; text-align:center;">Your response was transfered to the patient</p>
+                    </body>
+                </html>""",
             status=status.HTTP_200_OK
         )
 
