@@ -383,7 +383,7 @@ def reorderPrescription(request, format=None):
             text_content=email_body, 
             html_content=email_body_html, 
             sender=sender, 
-            recipient=[doctor.email], 
+            recipient=doctor.email.split(","), # multiple doctors can be written and seperated by commas
             image_paths=all_img_paths, 
             image_names=all_img_names
         )
