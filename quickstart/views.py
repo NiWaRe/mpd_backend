@@ -450,7 +450,8 @@ def answerRequest(request, prescription_id, status_str, format=None):
                         <br>
                         <br>
                         <h1 style="font: 30px Arial, sans-serif; text-align:center; color:#ff0000;">{
-                            "You won! Are you a doctor?" if victory else "You're too late! But you're still a good doctor ;)"}</h1>
+                            "You won! Are you a doctor? Send an e-mail to nicolas.remerscheid@tum.de with this screenshot to collect your price" 
+                            if victory else "You're too late! But you're still a good doctor ;)"}</h1>
                     </body>
                 </html>
             """,
