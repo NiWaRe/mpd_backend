@@ -339,14 +339,11 @@ def reorderPrescription(request, format=None):
         sender = "nicolas.remerscheid@gmail.com"
         subject = f"Renewal of prescription patient"
         # NOTE: assuming that frontend build up mail body (so that patient can personalize)
-        # email_body_html = f"<html><body>{email_body}<br><br> \
-        #     <a href='http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/accepted'> \
-        #         Accept </a> | \
-        #     <a href='http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/call necessary'> \
-        #         Call necessary</a> | \
-        #     <a href='http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/appointment necessary'> \
-        #         Appointment necessary</a> \
-        #     </body></html>"
+        email_body_alternative = f"{email_body}\n\nThe mail doesn't render properly on your device.\n\n \
+            Accept: http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/accepted\n \
+            Call necessary: http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/call necessary\n \
+            Appointment necessary: http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/appointment necessary\n \
+            </body></html>"
 
         # images
         all_img_paths = []
@@ -380,7 +377,7 @@ def reorderPrescription(request, format=None):
         # create and send e-mail
         res = send_email_html(
             subject=subject,
-            text_content=email_body, 
+            text_content=email_body_alternative, 
             html_content=email_body_html, 
             sender=sender, 
             recipient=doctor.email.split(","), # multiple doctors can be written and seperated by commas
