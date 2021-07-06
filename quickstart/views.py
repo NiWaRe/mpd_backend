@@ -16,7 +16,7 @@ from django.template import loader
 from pathlib import Path
 from email.mime.image import MIMEImage
 from django.core.mail import EmailMultiAlternatives
-import os
+import os, time, random
 
 
 def index(request):
@@ -421,7 +421,7 @@ def answerRequest(request, prescription_id, status_str, format=None):
         status ok, 200
     """
     if request.method == 'GET':
-        # NOTE when doing GET request with args from a Frontend for example.
+        # NOTE: when doing GET request with args from a Frontend for example.
         # prescription_id = request.query_params.get("prescription_id", None)
         # status_str = request.query_params.get("status", None)
 
@@ -433,8 +433,13 @@ def answerRequest(request, prescription_id, status_str, format=None):
             Prescriptions, 
             prescription_id=prescription_id,
         )
-        prescription_obj.status = status_str
-        prescription_obj.save()
+
+         # NOTE: the if is only for demo participants game 
+        victory = False
+        if prescription_obj.status=='pending': 
+            victory = True
+            prescription_obj.status = status_str
+            prescription_obj.save()
         
         return HttpResponse(
             f"""
@@ -442,8 +447,13 @@ def answerRequest(request, prescription_id, status_str, format=None):
                     <body>
                         <h1 style="font: 30px Arial, sans-serif; text-align:center; color:#236D49;">{status_str}</h1>
                         <p style="font: 15px Arial, sans-serif; text-align:center;">Your response was transfered to the patient</p>
+                        <br>
+                        <br>
+                        <h1 style="font: 30px Arial, sans-serif; text-align:center; color:#ff0000;">{
+                            "You won! Are you a doctor?" if victory else "You're too late! But you're still a good doctor ;)"}</h1>
                     </body>
-                </html>""",
+                </html>
+            """,
             status=status.HTTP_200_OK
         )
 
