@@ -20,7 +20,7 @@ class Product(models.Model):
 class Doctors(models.Model):
     doctor_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
-    email = models.CharField(max_length=100)
+    email = models.CharField(max_length=10000)
     address = models.CharField(max_length=500)
     # path can be left empty (null=True not possible for textfields)
     description = models.CharField(max_length=1000, blank=True)
@@ -38,7 +38,7 @@ class Doctors(models.Model):
 class Patients(models.Model):
     patient_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
-    email = models.CharField(max_length=100)
+    email = models.CharField(max_length=10000)
     address = models.CharField(max_length=500)
     isChronic = models.BooleanField()
     condition = models.CharField(max_length=100, blank=True)
