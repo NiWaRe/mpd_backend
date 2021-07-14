@@ -16,6 +16,7 @@ from django.template import loader
 from pathlib import Path
 from email.mime.image import MIMEImage
 from django.core.mail import EmailMultiAlternatives
+from django.core import mail
 import os, time, random
 
 
@@ -290,23 +291,32 @@ def redeemPrescription(request, format=None):
     return Response("last error", status=status.HTTP_400_BAD_REQUEST) 
 
 # Utility function for sending for emails
-def send_email_html(subject, text_content, html_content, sender, recipient, image_paths=None, image_names=None):
-    email = EmailMultiAlternatives(
-        subject=subject, 
-        body=text_content, 
-        from_email=sender, 
-        to=recipient if isinstance(recipient, list) else [recipient]
-    )
-    for image_path, image_name in zip(image_paths,image_names):
-        if all([html_content,image_path,image_name]):
-            email.attach_alternative(html_content, "text/html")
-            email.content_subtype = 'html'  # set the primary content to be text/html
-            email.mixed_subtype = 'related' # it is an important part that ensures embedding of an image 
-            with open(image_path, mode='rb') as f:
-                image = MIMEImage(f.read())
-                email.attach(image)
-                image.add_header('Content-ID', f"<{image_name}>")
-    return email.send()
+def send_email_html(subject, text_content, html_content_arr, sender, recipients, image_paths=None, image_names=None):
+    success = 0
+    messages = []
+    with mail.get_connection() as connection:
+        # both arrays have the same length (email for every recipient and mail of every recipient)
+        for html_content, recipient in zip(html_content_arr, recipients):
+            email = EmailMultiAlternatives(
+                subject=subject, 
+                body=text_content(recipient), 
+                from_email=sender, 
+                to=[recipient],
+                # bcc=recipient if isinstance(recipient, list) else [recipient], 
+                connection=connection,
+            )
+            for image_path, image_name in zip(image_paths,image_names):
+                if all([html_content,image_path,image_name]):
+                    email.attach_alternative(html_content, "text/html")
+                    email.content_subtype = 'html'  # set the primary content to be text/html
+                    email.mixed_subtype = 'related' # it is an important part that ensures embedding of an image 
+                    with open(image_path, mode='rb') as f:
+                        image = MIMEImage(f.read())
+                        email.attach(image)
+                        image.add_header('Content-ID', f"<{image_name}>")
+            messages.append(email)
+        success = connection.send_messages(messages)
+    return success
 
 @api_view(['POST'])
 @parser_classes([JSONParser])
@@ -336,13 +346,13 @@ def reorderPrescription(request, format=None):
         
         # TODO: this should be stored and extracted from patient table
         # TODO: can I change the displayed name to whatever I want? 
-        sender = "nicolas.remerscheid@gmail.com"
-        subject = f"Renewal of prescription patient"
+        sender = "Helen Potter"
+        subject = f"Renewal of my prescription | MPD presentation"
         # NOTE: assuming that frontend build up mail body (so that patient can personalize)
-        email_body_alternative = f"{email_body}\n\nThe mail doesn't render properly on your device.\n\n \
-            Accept: http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/accepted\n \
-            Call necessary: http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/call necessary\n \
-            Appointment necessary: http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/appointment necessary\n \
+        email_body_alternative = lambda recipient : f"{email_body}\n\n| The mail doesn't render properly on your device.\n\n \
+            Accept: http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/accepted/{recipient}\n \
+            Call necessary: http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/call%necessary/{recipient}\n \
+            Appointment necessary: http://{request.META['HTTP_HOST']}/quickstart/api/answer_request/{prescription_id}/appointment%necessary/{recipient}\n \
             </body></html>"
 
         # images
@@ -363,24 +373,30 @@ def reorderPrescription(request, format=None):
         all_img_names.append(header_name)
 
         # TODO: the email_body shouldn't contain html tags.
-        email_body_html = loader.render_to_string(
-            'doctor_mail.html',
-            {
-                'email_body':email_body,
-                'current_domain':request.META['HTTP_HOST'],
-                'prescription_id':prescription_id,
-                'logo':logo_name,
-                'header':header_name,
-            }
-        )
+        recipients = doctor.email.split(",")
+        email_body_html_arr = []
+        for recipient in recipients:
+            email_body_html_arr.append(
+                loader.render_to_string(
+                    'doctor_mail.html',
+                    {
+                        'email_body':email_body,
+                        'current_domain':request.META['HTTP_HOST'],
+                        'prescription_id':prescription_id,
+                        'logo':logo_name,
+                        'header':header_name,
+                        'recipient':recipient,
+                    }
+                )
+            )
 
         # create and send e-mail
         res = send_email_html(
             subject=subject,
             text_content=email_body_alternative, 
-            html_content=email_body_html, 
+            html_content_arr=email_body_html_arr, 
             sender=sender, 
-            recipient=doctor.email.split(","), # multiple doctors can be written and seperated by commas
+            recipients=recipients, # multiple doctors can be written and seperated by commas
             image_paths=all_img_paths, 
             image_names=all_img_names
         )
@@ -411,7 +427,7 @@ def reorderPrescription(request, format=None):
 @api_view(['GET'])
 @parser_classes([JSONParser])
 @permission_classes([permissions.AllowAny])
-def answerRequest(request, prescription_id, status_str, format=None):
+def answerRequest(request, prescription_id, status_str, recipient, format=None):
     """
     Called when doctor clicks on specific action link (which was send via mail).
     Args: 
@@ -437,6 +453,15 @@ def answerRequest(request, prescription_id, status_str, format=None):
          # NOTE: the if is only for demo participants game 
         victory = False
         if prescription_obj.status=='pending': 
+            # Send email to me with the mail of the winner
+            with mail.get_connection() as connection:
+                success = mail.EmailMessage(
+                    'MPD - Challenge Update',
+                    f'The first person to answer was: {recipient}',
+                    'MPD Challenge Update',
+                    ['nicolas.remerscheid@tum.de', 'manuel.cardenas@cdtm.de'],
+                    connection=connection,
+                ).send()
             victory = True
             prescription_obj.status = status_str
             prescription_obj.save()
@@ -450,7 +475,7 @@ def answerRequest(request, prescription_id, status_str, format=None):
                         <br>
                         <br>
                         <h1 style="font: 30px Arial, sans-serif; text-align:center; color:#ff0000;">{
-                            "You won! Are you a doctor? Send an e-mail to nicolas.remerscheid@tum.de with this screenshot to collect your price" 
+                            "You won! Are you a doctor? Answer to this mail with this screenshot to collect your price" 
                             if victory else "You're too late! But you're still a good doctor ;)"}</h1>
                     </body>
                 </html>

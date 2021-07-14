@@ -31,19 +31,19 @@
         <!-- TODO: not centered responsively. -->
         <div class="row d-flex justify-content-center">
             <a 
-                href="http://{{ current_domain }}/quickstart/api/answer_request/{{ prescription_id }}/accepted"
+                href="http://{{ current_domain }}/quickstart/api/answer_request/{{ prescription_id }}/accepted/{{ recipient }}"
                 class="btn btn-success"
                 style="background-color:#236D49; margin: 5px; width:100px; display: inline-block; text-decoration: none; color:white; padding: 4px; text-align: center; border-radius: 5px;">
                 Accept request
             </a> 
             <a 
-                href="http://{{ current_domain }}/quickstart/api/answer_request/{{ prescription_id }}/call necessary"
+                href="http://{{ current_domain }}/quickstart/api/answer_request/{{ prescription_id }}/call%necessary/{{ recipient }}"
                 class="btn btn-success"
                 style="background-color:#236D49; margin: 5px; width:100px; display: inline-block; text-decoration: none; color:white; padding: 4px; text-align: center; border-radius: 5px;">
                 Call necessary
             </a> 
             <a 
-                href="http://{{ current_domain }}/quickstart/api/answer_request/{{ prescription_id }}/appointment necessary"
+                href="http://{{ current_domain }}/quickstart/api/answer_request/{{ prescription_id }}/appointment%necessary/{{ recipient }}"
                 class="btn btn-success"
                 style="background-color:#236D49; margin: 5px; width:100px; display: inline-block; text-decoration: none; color:white; padding: 4px; text-align: center; border-radius: 5px;">
                 Appointment necessary
