@@ -459,7 +459,7 @@ def answerRequest(request, prescription_id, status_str, recipient, format=None):
                     'MPD - Challenge Update',
                     f'The first person to answer was: {recipient}',
                     'MPD Challenge Update',
-                    ['nicolas.remerscheid@tum.de', 'manuel.cardenas@cdtm.de'],
+                    ['nicolas.remerscheid@tum.de', 'manoletre@gmail.com'],
                     connection=connection,
                 ).send()
             victory = True
