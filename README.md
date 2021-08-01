@@ -64,5 +64,7 @@ All APIs are created with help of the Django REST API framework plug-in for Djan
   * /quickstart/api/responsible_doctors/
   * Example input: `{"patient_id":1, "medication_ids":[1, 3, 7]}`
 
+--> All example input is based on our version of the database. Add elements to your database with the django admin panel and adapt the input accordingly.
+
 Other all inc. tools we considered but didn't use: 
 * [ONLINE Shop Django Tool](https://django-shop.readthedocs.io/en/latest/architecture.html)
